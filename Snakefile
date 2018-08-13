@@ -7,8 +7,8 @@ rule all:
         expand("data/output/{smp}/mapped/", smp=SAMPLES),
         expand("data/output/{smp}/fastqc_untrimmed/", smp=SAMPLES),
         expand("data/output/{smp}/fastqc_trimmed/", smp=SAMPLES),
-        #expand("data/output/{smp}/featurecounts")
-        #expand("data/output/{smp}/qualimap/", smp=SAMPLES)
+        expand("data/output/{smp}/mapped/Aligned.sortedByCoord.out_sorted.bam", smp=SAMPLES),
+        expand("data/output/{smp}/mapped/Aligned.sortedByCoord.out_sorted.bam.bai", smp=SAMPLES)
 
 
 
@@ -36,6 +36,23 @@ rule mapping:
         "STAR --genomeDir {input.ref} --readFilesCommand zcat --readFilesIn {input.fwd_trim} {input.rev_trim} --runThreadN 5 --outFileNamePrefix {output} --outSAMtype BAM SortedByCoordinate --sjdbGTFfile {input.gtf}"
 
 
+rule samtools_sort:
+    input:
+        "data/output/{smp}/mapped/Aligned.sortedByCoord.out.bam"
+    output:
+        "data/output/{smp}/mapped/Aligned.sortedByCoord.out_sorted.bam"
+    shell:
+        "samtools sort {input} -o {output}"
+
+
+rule samtools_index:
+    input:
+        "data/output/{smp}/mapped/Aligned.sortedByCoord.out_sorted.bam"    
+    output:
+        "data/output/{smp}/mapped/Aligned.sortedByCoord.out_sorted.bam.bai"
+    shell:
+        "samtools index {input}"
+
 
 
 rule fastqc_untrimmed:
@@ -46,7 +63,6 @@ rule fastqc_untrimmed:
         "data/output/{smp}/fastqc_untrimmed/"
     shell:
         "fastqc --quiet --outdir {output} --extract  -f fastq {input.fwd_raw} {input.rev_raw}"
-
 
 
 
